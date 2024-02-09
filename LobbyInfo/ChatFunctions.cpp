@@ -29,6 +29,11 @@ void LobbyInfo::onChat(void* params)
     PriWrapper pri(reinterpret_cast<uintptr_t>(chatParams->InPRI));
     std::string message = (UnrealStringWrapper(reinterpret_cast<uintptr_t>(&chatParams->Message))).ToString();
 
+    if (!pri) {
+        LOG("pri is NULL! ... returning");
+        return;
+    }
+
     // parse quickchat if necessary
     std::string quickChat = "";
     if (message.size() <= 15 && message.contains("Group") && message.contains("Message")) {
