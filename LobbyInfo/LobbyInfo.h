@@ -45,13 +45,11 @@ class LobbyInfo: public BakkesMod::Plugin::BakkesModPlugin
 
 	void onLoad() override;
 
-	// ChatLogger stuff 
+	// Chat stuff 
 	void onChat(void* params);
 	void logChat(PriWrapper pri, std::string messageContent, std::string quickChat);
-	void logPartyChat(std::string name, std::string chat, bool isUser);
 	void checkJsonFiles();
 	void createJsonDataAndWriteToFile(std::string chat, std::string name, std::string relation, std::string time, std::string platform);
-	void saveChatsAndClearLog();
 	void clearChatLog(std::filesystem::path filePath, std::string fileName);
 	void retrieveUserData();
 	void writeContent(std::filesystem::path FileName, std::string Buffer);
@@ -59,6 +57,12 @@ class LobbyInfo: public BakkesMod::Plugin::BakkesModPlugin
 	std::string parsePlatform(OnlinePlatform platform);
 	std::string getCurrentTimeAndDate(std::string format = "full");
 	
+	// Rank stuff
+	std::vector<Player> Players;
+	void updatePlayers();
+	void updateJson(std::vector<Player> playersVect);
+	void updateJsonOnEvent(const char* eventFunction);
+
 	// user info stuff
 	static std::string userName;
 	static std::string userPlatform;
@@ -69,18 +73,6 @@ class LobbyInfo: public BakkesMod::Plugin::BakkesModPlugin
 	static std::filesystem::path lobbyInfoFolder;
 	static std::filesystem::path ranksFilePath;
 	static std::filesystem::path chatsFilePath;
-	static std::filesystem::path savedChatsFolder;
-	static std::filesystem::path savedChatsFilePath;
-
-
-	// MMRGrabber stuff
-	std::vector<Player> Players;
-	void updatePlayers();
-	void updateJson(std::vector<Player> playersVect);
-	void checkJsonFile();
-	void retrieveBMDataFolder();
-	std::vector<std::string> parseRank(int tier, int div);
-	void updateJsonOnEvent(const char* eventFunction);
 
 
 	//void onUnload() override; // Uncomment and implement if you need a unload method

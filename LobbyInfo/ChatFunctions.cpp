@@ -18,8 +18,6 @@ std::string LobbyInfo::currentMonth = "?";
 std::filesystem::path LobbyInfo::lobbyInfoFolder;
 std::filesystem::path LobbyInfo::ranksFilePath;
 std::filesystem::path LobbyInfo::chatsFilePath;
-std::filesystem::path LobbyInfo::savedChatsFolder;
-std::filesystem::path LobbyInfo::savedChatsFilePath;
 
 
 void LobbyInfo::onChat(void* params)
@@ -55,6 +53,7 @@ void LobbyInfo::onChat(void* params)
 
     logChat(pri, message, quickChat);
 }
+
 
 void LobbyInfo::logChat(PriWrapper pri, std::string chat, std::string quickChat) {
     // handle disabled quick chats
@@ -158,6 +157,7 @@ void LobbyInfo::logChat(PriWrapper pri, std::string chat, std::string quickChat)
     createJsonDataAndWriteToFile(chat, chatterName, relation, dateAndTime, platformStr);
 }
 
+
 std::string LobbyInfo::parsePlatform(OnlinePlatform platform) {
     switch (platform)
     {
@@ -183,9 +183,10 @@ std::string LobbyInfo::parsePlatform(OnlinePlatform platform) {
     }
 }
 
-void LobbyInfo::createJsonDataAndWriteToFile(std::string chat, std::string name, std::string relation, std::string time, std::string platform) {
-    bool minifyChatLog = cvarManager->getCvar("LobbyInfo_minifyChatLog").getBoolValue();
 
+void LobbyInfo::createJsonDataAndWriteToFile(std::string chat, std::string name, std::string relation, std::string time, std::string platform) {
+    bool minifyJSON = cvarManager->getCvar("LobbyInfo_minifyChatLog").getBoolValue();
+    
     // create new json object and populate it with data from chat
     nlohmann::json chatObj;
     chatObj["chat"] = chat;
@@ -202,42 +203,14 @@ void LobbyInfo::createJsonDataAndWriteToFile(std::string chat, std::string name,
         auto chatJsonData = nlohmann::json::parse(jsonFileRawStr);
         chatJsonData["chatMessages"].push_back(chatObj);
 
-        writeContent(chatsFilePath, chatJsonData.dump(minifyChatLog ? -1 : 4));
-        LOG("Added to chat log :)");
+        writeContent(chatsFilePath, chatJsonData.dump(minifyJSON ? -1 : 4));
+        LOG("Recorded chat :)");
     }
     catch (...) {
         LOG("*** Couldn't read the 'Chats.json' file! Make sure it contains valid JSON... ***");
     }
 }
 
-void LobbyInfo::saveChatsAndClearLog() {
-    // read JSON data as serialized string
-    std::string chatLogFileRawStr = readContent(chatsFilePath);
-    std::string savedChatsFileRawStr = readContent(savedChatsFilePath);
-
-    // prevent crash if JSON data is invalid
-    try {
-        // parse JSON
-        auto chatLogJsonData = nlohmann::json::parse(chatLogFileRawStr);
-        if (chatLogJsonData["chatMessages"].size() < 1) { return; }
-        auto savedChatsJsonData = nlohmann::json::parse(savedChatsFileRawStr);
-
-        // append chats from 'Chats.json' to existing chats in 'SavedChats.json'
-        for (int i = 0; i < chatLogJsonData["chatMessages"].size(); i++) {
-            savedChatsJsonData["chatMessages"].push_back(chatLogJsonData["chatMessages"][i]);
-        }
-
-        // write updated JSON data to file
-        bool minifySavedChats = cvarManager->getCvar("LobbyInfo_minifySavedChats").getBoolValue();
-        writeContent(savedChatsFilePath, savedChatsJsonData.dump(minifySavedChats ? -1 : 4));
-        LOG("Saved chats to '{}_SavedChats.json' :)", currentMonth);
-
-        clearChatLog(chatsFilePath, "Chats.json");
-    }
-    catch (...) {
-        LOG("*** Couln't read JSON file! Make sure it's formatted correctly... ***");
-    }
-}
 
 void LobbyInfo::clearChatLog(std::filesystem::path filePath, std::string fileName) {
     try {
@@ -256,10 +229,12 @@ void LobbyInfo::clearChatLog(std::filesystem::path filePath, std::string fileNam
     }
 }
 
+
 std::string LobbyInfo::getCurrentTimeAndDate(std::string format) {
     auto const time = std::chrono::current_zone()->to_local(std::chrono::system_clock::now());
     return format == "full" ? std::format("{:%m/%d/%Y %r}", time) : std::format("{:%B_%Y}", time);
 }
+
 
 std::string LobbyInfo::readContent(std::filesystem::path FileName) {
     std::ifstream Temp(FileName);
@@ -268,23 +243,19 @@ std::string LobbyInfo::readContent(std::filesystem::path FileName) {
     return (Buffer.str());
 }
 
+
 void LobbyInfo::writeContent(std::filesystem::path FileName, std::string Buffer) {
     std::ofstream File(FileName, std::ofstream::trunc);
     File << Buffer;
     File.close();
 }
 
+
 void LobbyInfo::checkJsonFiles() {
     // create 'Lobby Info' folder if it doesn't exist
     if (!std::filesystem::exists(lobbyInfoFolder)) {
         std::filesystem::create_directory(lobbyInfoFolder);
         LOG("'Lobby Info' folder didn't exist... so I created it.");
-    }
-
-    // create 'Saved Chats' folder if it doesn't exist
-    if (!std::filesystem::exists(savedChatsFolder)) {
-        std::filesystem::create_directory(savedChatsFolder);
-        LOG("'Saved Chats' folder didn't exist... so I created it.");
     }
 
     // create JSON files if they don't exist
@@ -300,13 +271,8 @@ void LobbyInfo::checkJsonFiles() {
         NewFile.close();
         LOG("'Chats.json' didn't exist... so I created it.");
     }
-    if (!std::filesystem::exists(savedChatsFilePath)) {
-        std::ofstream NewFile(savedChatsFilePath);
-        NewFile << "{ \"user\": \"" + userName + "\", \"chatMessages\":[]}";
-        NewFile.close();
-        LOG("'{}_SavedChats.json' didn't exist... so I created it.", currentMonth);
-    }
 }
+
 
 void LobbyInfo::retrieveUserData() {
     try {
@@ -321,9 +287,6 @@ void LobbyInfo::retrieveUserData() {
         lobbyInfoFolder = bmDataFolderFilePath / "Lobby Info";
         ranksFilePath = lobbyInfoFolder / "Ranks.json";
         chatsFilePath = lobbyInfoFolder / "Chats.json";
-        savedChatsFolder = lobbyInfoFolder / "Saved Chats";
-        savedChatsFilePath = savedChatsFolder / (currentMonth + "_SavedChats.json");
-
 
         LOG("Successfully retrieved user data");
         LOG("Player name: {}", userName);

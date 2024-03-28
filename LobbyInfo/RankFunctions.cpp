@@ -137,6 +137,7 @@ void LobbyInfo::updatePlayers() {
 }
 
 void LobbyInfo::updateJson(std::vector<Player> playersVect) {
+	bool minifyJSON = cvarManager->getCvar("LobbyInfo_minifyRankLog").getBoolValue();
 
 	// create new json object and populate it with data from chat
 	nlohmann::json lobbyRanksObj;
@@ -177,7 +178,7 @@ void LobbyInfo::updateJson(std::vector<Player> playersVect) {
 	}
 
 	try {
-		writeContent(ranksFilePath, lobbyRanksObj.dump(4));
+		writeContent(ranksFilePath, lobbyRanksObj.dump(minifyJSON ? -1 : 4));
 		LOG("Updated Ranks.json :)");
 	}
 	catch (...) {
