@@ -3,7 +3,7 @@
 
 std::string SettingsWindowBase::GetPluginName()
 {
-	return "LobbyInfo";
+	return "Lobby Info";
 }
 
 void SettingsWindowBase::SetImGuiContext(uintptr_t ctx)
