@@ -24,6 +24,6 @@ The JSON files are updated as relevant lobby events occur (i.e. a new chat is se
 
 Find the latest version in [Releases](https://github.com/smallest-cock/LobbyInfo/releases)
 
-1. Download `LobbyInfo.dll`
+1. Click `LobbyInfo.zip` to download it
 
-2. Drag/drop it into your bakkesmod plugins folder
+2. Extract `LobbyInfo.zip` and run `install.bat`
